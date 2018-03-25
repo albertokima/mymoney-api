@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -32,6 +33,7 @@ import com.example.mymoney.api.repository.filter.LancamentoFilter;
 import com.example.mymoney.api.repository.projection.ResumoLancamento;
 import com.example.mymoney.api.service.LancamentoService;
 import com.example.mymoney.api.service.exception.CategoriaInexistenteException;
+import com.example.mymoney.api.service.exception.LancamentoInexistenteException;
 import com.example.mymoney.api.service.exception.PessoaInexistenteInativaException;
 
 @RestController
@@ -77,11 +79,35 @@ public class LancamentoResource {
 		return ResponseEntity.created(uri).body(lancamentoSalvo);		
 	}
 
+	@PutMapping("/{codigo}")
+	@PreAuthorize("hasAuthority('ROLE_CADASTRAR_LANCAMENTO') and #oauth2.hasScope('write')")
+	public ResponseEntity<Lancamento> atualizar(@PathVariable Long codigo, @Valid @RequestBody Lancamento lancamento){
+		Lancamento lancamentoSalvo = lancamentoService.atualizar(codigo, lancamento);
+		return ResponseEntity.ok(lancamentoSalvo);
+//Resposta com tratamento de exceção
+//		try {
+//			Lancamento lancamentoSalvo = lancamentoService.atualizar(codigo, lancamento);
+//			return ResponseEntity.ok(lancamentoSalvo);
+//		} catch (LancamentoInexistenteException e) {
+//			return ResponseEntity.notFound().build();
+//		}
+	}
+
 	@DeleteMapping("/{codigo}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	@PreAuthorize("hasAuthority('ROLE_REMOVER_LANCAMENTO') and #oauth2.hasScope('write')")
 	public void remover(@PathVariable Long codigo) {
 		lancamentoRepository.delete(codigo);
+	}
+	
+	@ExceptionHandler({LancamentoInexistenteException.class})
+	protected ResponseEntity<Object> handleLancamentoInexistenteException(LancamentoInexistenteException ex){
+		
+		String mensagemUsuario = messageSource.getMessage("lancamento.inexistente", null, LocaleContextHolder.getLocale());
+		String mensagemDesenvolvedor = ex.toString();
+		List<Erro> erros = Arrays.asList(new Erro(mensagemUsuario, mensagemDesenvolvedor));
+		
+		return ResponseEntity.badRequest().body(erros);
 	}
 	
 	@ExceptionHandler({PessoaInexistenteInativaException.class})

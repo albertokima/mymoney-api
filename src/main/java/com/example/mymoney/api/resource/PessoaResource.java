@@ -1,11 +1,12 @@
 package com.example.mymoney.api.resource;
 
 import java.net.URI;
-import java.util.List;
 
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,12 +17,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.example.mymoney.api.model.Pessoa;
 import com.example.mymoney.api.repository.PessoaRepository;
+import com.example.mymoney.api.repository.filter.PessoaFilter;
 import com.example.mymoney.api.service.PessoaService;
 
 @RestController
@@ -35,10 +38,17 @@ public class PessoaResource {
 	private PessoaService pessoaService;
 	
 	@GetMapping
-	public List<Pessoa> listar(){
-		return pessoaRepository.findAll();
+	@PreAuthorize("hasAuthority('ROLE_PESQUISAR_PESSOA') and #oauth2.hasScope('read')")
+	public Page<Pessoa> pesquisar(PessoaFilter pessoaFilter, Pageable pageable){
+		return pessoaRepository.filtrar(pessoaFilter, pageable);
 	}
 	
+	@GetMapping("/porNome")
+	@PreAuthorize("hasAuthority('ROLE_PESQUISAR_PESSOA') and #oauth2.hasScope('read')")
+	public Page<Pessoa> pesquisarPorNome(@RequestParam(required = false, defaultValue = "%") String nome, Pageable pageable){
+		return pessoaRepository.findByNomeContaining(nome, pageable);
+	}
+
 	@GetMapping("/{codigo}")
 	@PreAuthorize("hasAuthority('ROLE_PESQUISAR_PESSOA') and #oauth2.hasScope('read')")
 	public ResponseEntity<Pessoa> pesquisarPorCodigo(@PathVariable Long codigo) {

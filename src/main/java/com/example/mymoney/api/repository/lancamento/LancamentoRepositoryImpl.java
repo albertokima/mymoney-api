@@ -13,10 +13,10 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.util.StringUtils;
 
 import com.example.mymoney.api.model.Categoria_;
@@ -26,11 +26,15 @@ import com.example.mymoney.api.model.Pessoa_;
 import com.example.mymoney.api.model.TipoLancamento;
 import com.example.mymoney.api.repository.filter.LancamentoFilter;
 import com.example.mymoney.api.repository.projection.ResumoLancamento;
+import com.example.mymoney.api.repository.util.RepositoryUtils;
 
 public class LancamentoRepositoryImpl implements LancamentoRepositoryQuery{
 
 	@PersistenceContext
 	private EntityManager manager;
+	
+	@Autowired
+	private RepositoryUtils repositoryUtils;
 	
 	@Override
 	public Page<Lancamento> filtrar(LancamentoFilter lancamentoFilter, Pageable pageable) {
@@ -40,10 +44,10 @@ public class LancamentoRepositoryImpl implements LancamentoRepositoryQuery{
 		
 		Predicate[] predicates = criarRestricoes(lancamentoFilter, builder, root);
 		criteria.where(predicates);		
-		adicionarOrdem(pageable, builder, criteria, root);
+		repositoryUtils.adicionarOrdem(pageable, builder, criteria, root);
 		TypedQuery<Lancamento> query = manager.createQuery(criteria);
 		
-		adicionarRestricoesDePaginacao(query, pageable);
+		repositoryUtils.adicionarRestricoesDePaginacao(query, pageable);
 		
 		return new PageImpl<>(query.getResultList(), pageable, total(lancamentoFilter));
 	}
@@ -63,10 +67,10 @@ public class LancamentoRepositoryImpl implements LancamentoRepositoryQuery{
 		
 		Predicate[] predicates = criarRestricoes(lancamentoFilter, builder, root);
 		criteria.where(predicates);		
-		adicionarOrdem(pageable, builder, criteria, root);
+		repositoryUtils.adicionarOrdem(pageable, builder, criteria, root);
 		TypedQuery<ResumoLancamento> query = manager.createQuery(criteria);
 		
-		adicionarRestricoesDePaginacao(query, pageable);
+		repositoryUtils.adicionarRestricoesDePaginacao(query, pageable);
 		
 		return new PageImpl<>(query.getResultList(), pageable, total(lancamentoFilter));
 	}
@@ -112,15 +116,6 @@ public class LancamentoRepositoryImpl implements LancamentoRepositoryQuery{
 		return predicates.toArray(new Predicate[predicates.size()]);
 	}
 	
-	private void adicionarRestricoesDePaginacao(TypedQuery<?> query, Pageable pageable) {
-		int paginaAtual = pageable.getPageNumber();
-		int totalRegistrosPorPagina = pageable.getPageSize();
-		int registroAtual = paginaAtual * totalRegistrosPorPagina;
-		
-		query.setFirstResult(registroAtual);
-		query.setMaxResults(totalRegistrosPorPagina);
-	}
-
 	private Long total(LancamentoFilter lancamentoFilter) {
 		CriteriaBuilder builder = manager.getCriteriaBuilder();
 		CriteriaQuery<Long> criteria = builder.createQuery(Long.class);
@@ -131,18 +126,6 @@ public class LancamentoRepositoryImpl implements LancamentoRepositoryQuery{
 		criteria.select(builder.count(root));
 		
 		return manager.createQuery(criteria).getSingleResult();
-	}
-
-	private void adicionarOrdem(Pageable pageable, CriteriaBuilder builder, CriteriaQuery<?> criteria,
-			Root<?> root) {
-		Sort sort = pageable.getSort();
-		if(sort != null) {
-			Sort.Order order = sort.iterator().next();
-			String field = order.getProperty();
-			criteria.orderBy(
-				order.isAscending() ? builder.asc(root.get(field)) : builder.desc(root.get(field))
-			);
-		}
 	}
 
 }
