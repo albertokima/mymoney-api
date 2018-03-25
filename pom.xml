@@ -96,6 +96,7 @@
 			<artifactId>spring-boot-configuration-processor</artifactId>
 			<optional>true</optional>
 		</dependency>
+		
 	</dependencies>
 
 	<build>
@@ -103,9 +104,30 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
+				<configuration>
+					<annotationProcessors>
+					  	<annotationProcessor>
+					  		org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor
+					 	</annotationProcessor>
+					</annotationProcessors>
+					<debug>true</debug>
+					<optimize>true</optimize>
+					<source>1.8</source>
+					<target>1.8</target>
+					<compilerArguments>
+						<AaddGeneratedAnnotation>true</AaddGeneratedAnnotation>
+						<Adebug>true</Adebug>
+					</compilerArguments>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>org.hibernate</groupId>
+						<artifactId>hibernate-jpamodelgen</artifactId>
+						<version>${hibernate-jpamodelgen.version}</version>
+					</dependency>
+				</dependencies>
+        	</plugin>
 		</plugins>
 	</build>
-
 
 </project>
