@@ -17,6 +17,7 @@ import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 
+import com.example.mymoney.api.config.property.MyMoneyApiProperty;
 import com.example.mymoney.api.config.token.CustomTokenEnhancer;
 
 @Profile("oauth-security")
@@ -27,6 +28,9 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 	@Autowired
 	private AuthenticationManager authenticationManager;
 	
+	@Autowired
+	private MyMoneyApiProperty property;
+	
 	@Override
 	public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
 		clients.inMemory()
@@ -34,15 +38,15 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 				.secret("@ngul@r0")
 				.scopes("read", "write")
 				.authorizedGrantTypes("password", "refresh_token")
-				.accessTokenValiditySeconds(1800)
-				.refreshTokenValiditySeconds(3600* 24)
+				.accessTokenValiditySeconds(property.getAccessTokenValiditySeconds())
+				.refreshTokenValiditySeconds(property.getRefreshTokenValiditySeconds())
 			.and()
 				.withClient("mobile")
 				.secret("m0b1l30")
 				.scopes("read")
 				.authorizedGrantTypes("password", "refresh_token")
-				.accessTokenValiditySeconds(1800)
-				.refreshTokenValiditySeconds(3600* 24);
+				.accessTokenValiditySeconds(600)
+				.refreshTokenValiditySeconds(3600);
 	}
 	
 	@Override
