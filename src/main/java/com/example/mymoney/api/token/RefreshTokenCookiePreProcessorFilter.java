@@ -29,7 +29,8 @@ public class RefreshTokenCookiePreProcessorFilter implements Filter {
 			throws IOException, ServletException {
 
 		HttpServletRequest req = (HttpServletRequest) request;
-		String tokenPath = req.getContextPath() + "/oauth/token"; 
+		String tokenPath = "/oauth/token"; 
+		//String tokenPath = req.getContextPath() + "/oauth/token";
 		
 		if (tokenPath.equalsIgnoreCase(req.getRequestURI()) 
 				&& "refresh_token".equals(req.getParameter("grant_type"))
